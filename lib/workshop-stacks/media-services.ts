@@ -4,9 +4,11 @@ import { CfnOutput, Stack } from "aws-cdk-lib";
 import { Encoder } from "../media-services/resources/media-live";
 import { Packager } from "../media-services/resources/media-package";
 import { Cdn } from "../media-services/resources/cloudfront";
-import { splitUrlPathFromEmpEndpoint } from "../media-services/helpers/url-processing";
+import { getDomainFromEmtEndpointUrl, splitEmtPathFromUrlPrefix, splitUrlPathFromEmpEndpoint } from "../media-services/helpers/url-processing";
 import { Construct } from "constructs";
 import { OpsMonitoring } from "../media-services/resources/channel-dashboard";
+import { AdInsertion } from "../media-services/resources/media-tailor";
+import { EMT_AD_DECISION_SERVER_URL } from "./config/emt-constants";
 
 export class MediaServicesStack extends Stack {
   constructor(scope: Construct) {
@@ -28,10 +30,16 @@ export class MediaServicesStack extends Stack {
     mp: this.mp.mp,
   });
 
+  public adInsertion = new AdInsertion(this, {
+    adsUrl: EMT_AD_DECISION_SERVER_URL,
+    originUrl: `https://${getDomainFromEmtEndpointUrl(this.mp.endpoints.hls.attrUrl)}`,
+  });
+
   // 3. Add CDN
   public cdn = new Cdn(this, {
     cdnAuthorization: this.mp.cdnOriginAuth.cdnSecret,
     empOriginUrl: this.mp.endpoints.hls.attrUrl,
+    emtOriginUrl: this.adInsertion.emt.attrPlaybackEndpointPrefix,
   }).distribution;
 
   // 4. Create Monitoring dashboard for your new channel
@@ -39,8 +47,15 @@ export class MediaServicesStack extends Stack {
 
   // 5. Outputs
   public outputs = [
-    new CfnOutput(this, "hls-endpoint-url", {
-      value: `https://${this.cdn.distributionDomainName}/${splitUrlPathFromEmpEndpoint(this.mp.endpoints.hls)}`,
+    new CfnOutput(this, "hls-endpoint-url-ssai", {
+      value: `https://${this.cdn.distributionDomainName}/${splitEmtPathFromUrlPrefix(
+        this.adInsertion.emt.attrHlsConfigurationManifestEndpointPrefix,
+      )}${splitUrlPathFromEmpEndpoint(this.mp.endpoints.hls)}`,
+    }),
+    new CfnOutput(this, "hls-endpoint-url-ssai-session-init-prefix", {
+      value: `https://${this.cdn.distributionDomainName}/${splitEmtPathFromUrlPrefix(
+        this.adInsertion.emt.attrSessionInitializationEndpointPrefix,
+      )}${splitUrlPathFromEmpEndpoint(this.mp.endpoints.hls)}`,
     }),
   ];
 }

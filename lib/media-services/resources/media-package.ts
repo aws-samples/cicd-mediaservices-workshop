@@ -2,6 +2,7 @@ import { CfnOutput, Stack } from "aws-cdk-lib";
 import { CfnChannel, CfnOriginEndpoint, CfnOriginEndpointProps } from "aws-cdk-lib/aws-mediapackage";
 import { Construct } from "constructs";
 import { CdnOriginAuthorization } from "./cdn-authorization";
+import { EMT_AD_TRIGGERS } from "../../workshop-stacks/config/emt-constants";
 
 type IEndpointProps = Omit<CfnOriginEndpointProps, "channelId" | "id">;
 
@@ -34,11 +35,16 @@ export class Packager extends Construct {
 
   public endpoints = {
     hls: this.createEndpoint(this, this.mp, "hls", {
-      hlsPackage: {},
+      hlsPackage: {
+        adTriggers: EMT_AD_TRIGGERS,
+        adMarkers: "PASSTHROUGH",
+      },
       authorization: this.baseCdnAuth,
     }),
     dash: this.createEndpoint(this, this.mp, "dash", {
-      dashPackage: {},
+      dashPackage: {
+        adTriggers: EMT_AD_TRIGGERS,
+      },
       authorization: this.baseCdnAuth,
     }),
   };

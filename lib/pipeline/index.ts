@@ -2,10 +2,10 @@ import { App, Stack } from "aws-cdk-lib";
 import { createCodeCommitRepo, createIamUserForCodeCommit } from "./resources/code-commit";
 import { CodePipeline, CodePipelineSource, ManualApprovalStep, ShellStep } from "aws-cdk-lib/pipelines";
 import { Effect, PolicyStatement } from "aws-cdk-lib/aws-iam";
+import { PIPELINE_PROD_MANUAL_APPROVAL } from "../workshop-stacks/config/pipeline";
 import { BuildSpec } from "aws-cdk-lib/aws-codebuild";
 import { createPreAndPostBuildActions } from "./resources/code-build";
 import { MediaServicesStage } from "../media-services";
-import { PIPELINE_PROD_MANUAL_APPROVAL } from "../workshop-stacks/config/pipeline";
 
 /**
  * Stack to create a self mutating Pipeline(s) for deploying workflows.
@@ -58,7 +58,7 @@ export class PipelineStack extends Stack {
       manualApprovalWave.addPre(new ManualApprovalStep("prod-environment-catch"));
     }
     pipeline.addStage(this.mediaStage, createPreAndPostBuildActions(this.mediaStage.stack.medialive.outputNames.channelName));
-    
+
     return pipeline;
   }
 }
