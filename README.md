@@ -105,14 +105,6 @@ npm run cdk deploy workshop-pipeline-stack
 In this repository we have used tools such as Prettier and ESLint to keep code formatted and consistent.
 This is part of the projects devDependencies - to run these tools you can see the scripts in `package.json`.
 
-### Testing
-Just like any other code, your infrastructure as code should also be thoroughly tested. This isn't an independent topic part of the workshop, however we have provided an 
-example test file for testing the CodePipeline, CodeBuild, CodeCommit + IAM User setup.
-If you are interested in running these tests after you've installed the projects node_modules simply run:
-```
-npm run test
-```
-
 ## Security
 
 See [CONTRIBUTING](CONTRIBUTING.md#security-issue-notifications) for more information.
