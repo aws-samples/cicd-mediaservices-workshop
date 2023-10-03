@@ -24,8 +24,8 @@ export class AdInsertion extends Construct {
     name: `${Aws.STACK_NAME}-EMT-config`,
     videoContentSourceUrl: this.props.originUrl,
     cdnConfiguration: {
-      contentSegmentUrlPrefix: "../../../../../../",
-      adSegmentUrlPrefix: "../../../../../../../../",
+      contentSegmentUrlPrefix: "../../../../../",
+      adSegmentUrlPrefix: "../../../../../../../",
     },
     manifestProcessingRules: {
       adMarkerPassthrough: {

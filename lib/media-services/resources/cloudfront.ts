@@ -3,6 +3,8 @@ import {
   AllowedMethods,
   CachePolicy,
   Distribution,
+  Function,
+  FunctionEventType,
   OriginProtocolPolicy,
   OriginRequestCookieBehavior,
   OriginRequestHeaderBehavior,
@@ -16,6 +18,7 @@ import { HttpOrigin } from "aws-cdk-lib/aws-cloudfront-origins";
 import { Secret } from "aws-cdk-lib/aws-secretsmanager";
 import { Construct } from "constructs";
 import { getDomainFromEmtEndpointUrl } from "../helpers/url-processing";
+import { SMD_FUNCTION_NAME } from "../../workshop-stacks/config/protect-constants";
 
 interface ICreateMediaCdn {
   emtOriginUrl: string;
@@ -26,6 +29,10 @@ interface ICreateMediaCdn {
 const errorResponse = [400, 403, 404, 405, 414, 416, 500, 501, 502, 503, 504];
 const errorDuration = Duration.seconds(1);
 
+function generateSmdFunctionArn(functionName: string): string {
+  return `arn:aws:cloudfront::${Aws.ACCOUNT_ID}:function/${functionName}`;
+}
+
 /**
  * Construct to build a CloudFront Distribution.
  *
@@ -35,6 +42,11 @@ export class Cdn extends Construct {
   constructor(scope: Construct, private props: ICreateMediaCdn) {
     super(scope, "cdn");
   }
+
+  private secureMediaDeliverFunction = Function.fromFunctionAttributes(this, "smdFunction", {
+    functionArn: generateSmdFunctionArn(SMD_FUNCTION_NAME),
+    functionName: SMD_FUNCTION_NAME,
+  });
 
   private myOriginRequestPolicyEMT = new OriginRequestPolicy(this, "OriginRequestPolicyEMT", {
     comment: `${Aws.STACK_NAME} OriginRequest Policy EMT`,
@@ -105,29 +117,47 @@ export class Cdn extends Construct {
         viewerProtocolPolicy: ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
         responseHeadersPolicy: ResponseHeadersPolicy.CORS_ALLOW_ALL_ORIGINS_WITH_PREFLIGHT,
       },
-      "/v1/master/*": {
+      "*/v1/master/*": {
         origin: this.mediaTailorOrigin,
         cachePolicy: CachePolicy.CACHING_DISABLED,
         allowedMethods: AllowedMethods.ALLOW_GET_HEAD,
         originRequestPolicy: this.myOriginRequestPolicyEMT,
         viewerProtocolPolicy: ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
         responseHeadersPolicy: this.myResponseHeadersPolicy,
+        functionAssociations: [
+          {
+            eventType: FunctionEventType.VIEWER_REQUEST,
+            function: this.secureMediaDeliverFunction,
+          },
+        ],
       },
-      "/out/*": {
+      "*/out/*": {
         origin: this.mediaPackageOrigin,
         originRequestPolicy: OriginRequestPolicy.ALL_VIEWER,
         cachePolicy: CachePolicy.ELEMENTAL_MEDIA_PACKAGE,
         allowedMethods: AllowedMethods.ALLOW_GET_HEAD,
         viewerProtocolPolicy: ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
         responseHeadersPolicy: this.myResponseHeadersPolicy,
+        functionAssociations: [
+          {
+            eventType: FunctionEventType.VIEWER_REQUEST,
+            function: this.secureMediaDeliverFunction,
+          },
+        ],
       },
-      "/v1/*": {
+      "*/v1/*": {
         origin: this.mediaTailorOrigin,
         cachePolicy: CachePolicy.CACHING_DISABLED,
         allowedMethods: AllowedMethods.ALLOW_GET_HEAD,
         originRequestPolicy: this.myOriginRequestPolicyEMT,
         viewerProtocolPolicy: ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
         responseHeadersPolicy: this.myResponseHeadersPolicy,
+        functionAssociations: [
+          {
+            eventType: FunctionEventType.VIEWER_REQUEST,
+            function: this.secureMediaDeliverFunction,
+          },
+        ],
       },
     },
   });

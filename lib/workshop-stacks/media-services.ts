@@ -9,6 +9,7 @@ import { Construct } from "constructs";
 import { OpsMonitoring } from "../media-services/resources/channel-dashboard";
 import { AdInsertion } from "../media-services/resources/media-tailor";
 import { EMT_AD_DECISION_SERVER_URL } from "./config/emt-constants";
+import { SmdRegisterContent } from "./custom-resources/smd-register-content";
 
 export class MediaServicesStack extends Stack {
   constructor(scope: Construct) {
@@ -17,6 +18,7 @@ export class MediaServicesStack extends Stack {
         region: process.env.CDK_DEFAULT_REGION,
         account: process.env.CDK_DEFAULT_ACCOUNT,
       },
+      crossRegionReferences: true,
     });
 
     this.medialive.node.addDependency(this.mp);
@@ -44,6 +46,13 @@ export class MediaServicesStack extends Stack {
 
   // 4. Create Monitoring dashboard for your new channel
   public cw = new OpsMonitoring(this, this.medialive.channel.ref, this.mp.mp.ref, this.cdn.distributionId);
+
+  public resource = new SmdRegisterContent(this, "register-hls-asset", {
+    endpointHostname: this.cdn.distributionDomainName,
+    urlPathForHls: `/${splitEmtPathFromUrlPrefix(this.adInsertion.emt.attrHlsConfigurationManifestEndpointPrefix)}${splitUrlPathFromEmpEndpoint(
+      this.mp.endpoints.hls,
+    )}`,
+  });
 
   // 5. Outputs
   public outputs = [
