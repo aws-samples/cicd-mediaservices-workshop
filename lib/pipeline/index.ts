@@ -6,6 +6,7 @@ import { PIPELINE_PROD_MANUAL_APPROVAL } from "../workshop-stacks/config/pipelin
 import { BuildSpec } from "aws-cdk-lib/aws-codebuild";
 import { createPreAndPostBuildActions } from "./resources/code-build";
 import { MediaServicesStage } from "../media-services";
+import { HarvestApiStage } from "../harvest-services";
 
 /**
  * Stack to create a self mutating Pipeline(s) for deploying workflows.
@@ -16,7 +17,7 @@ import { MediaServicesStage } from "../media-services";
  * @see https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.pipelines.CodePipeline.html
  */
 export class PipelineStack extends Stack {
-  constructor(app: App, private mediaStage: MediaServicesStage) {
+  constructor(app: App, private mediaStage: MediaServicesStage, private live2VodStage: HarvestApiStage) {
     super(app, "workshop-pipeline-stack", {
       env: {
         region: process.env.CDK_DEFAULT_REGION,
@@ -28,7 +29,13 @@ export class PipelineStack extends Stack {
   protected repo = createCodeCommitRepo(this);
   protected user = createIamUserForCodeCommit(this);
 
+  private cdkShellStep = new ShellStep("synth", {
+    input: CodePipelineSource.codeCommit(this.repo, "main"),
+    commands: ["npm install", "npm run cdk synth"],
+  });
+
   protected pipelines = this.createPipelines();
+  protected live2vodPipeline = this.createLive2VodPipeline();
 
   createPipelines() {
     const pipeline = new CodePipeline(this, "pipeline", {
@@ -47,10 +54,7 @@ export class PipelineStack extends Stack {
           }),
         ],
       },
-      synth: new ShellStep("synth", {
-        input: CodePipelineSource.codeCommit(this.repo, "main"),
-        commands: ["npm install", "npm run cdk synth"],
-      }),
+      synth: this.cdkShellStep,
     });
 
     if (PIPELINE_PROD_MANUAL_APPROVAL) {
@@ -58,6 +62,24 @@ export class PipelineStack extends Stack {
       manualApprovalWave.addPre(new ManualApprovalStep("prod-environment-catch"));
     }
     pipeline.addStage(this.mediaStage, createPreAndPostBuildActions(this.mediaStage.stack.medialive.outputNames.channelName));
+
+    return pipeline;
+  }
+
+  createLive2VodPipeline() {
+    const pipeline = new CodePipeline(this, "live2vodpipeline", {
+      selfMutation: true,
+      codeBuildDefaults: {
+        partialBuildSpec: BuildSpec.fromObject({
+          env: {
+            shell: "bash",
+          },
+        }),
+      },
+      synth: this.cdkShellStep,
+    });
+
+    pipeline.addStage(this.live2VodStage);
 
     return pipeline;
   }
