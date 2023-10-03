@@ -3,6 +3,9 @@ import { createCodeCommitRepo, createIamUserForCodeCommit } from "./resources/co
 import { CodePipeline, CodePipelineSource, ManualApprovalStep, ShellStep } from "aws-cdk-lib/pipelines";
 import { Effect, PolicyStatement } from "aws-cdk-lib/aws-iam";
 import { BuildSpec } from "aws-cdk-lib/aws-codebuild";
+import { createPreAndPostBuildActions } from "./resources/code-build";
+import { MediaServicesStage } from "../media-services";
+import { PIPELINE_PROD_MANUAL_APPROVAL } from "../workshop-stacks/config/pipeline";
 
 /**
  * Stack to create a self mutating Pipeline(s) for deploying workflows.
@@ -13,7 +16,7 @@ import { BuildSpec } from "aws-cdk-lib/aws-codebuild";
  * @see https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.pipelines.CodePipeline.html
  */
 export class PipelineStack extends Stack {
-  constructor(app: App) {
+  constructor(app: App, private mediaStage: MediaServicesStage) {
     super(app, "workshop-pipeline-stack", {
       env: {
         region: process.env.CDK_DEFAULT_REGION,
@@ -50,6 +53,12 @@ export class PipelineStack extends Stack {
       }),
     });
 
+    if (PIPELINE_PROD_MANUAL_APPROVAL) {
+      const manualApprovalWave = pipeline.addWave("prod-environment-catch");
+      manualApprovalWave.addPre(new ManualApprovalStep("prod-environment-catch"));
+    }
+    pipeline.addStage(this.mediaStage, createPreAndPostBuildActions(this.mediaStage.stack.medialive.outputNames.channelName));
+    
     return pipeline;
   }
 }
