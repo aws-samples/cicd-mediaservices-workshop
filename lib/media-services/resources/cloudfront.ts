@@ -24,6 +24,7 @@ interface ICreateMediaCdn {
   emtOriginUrl: string;
   empOriginUrl: string;
   cdnAuthorization: Secret;
+  wafArn: string;
 }
 
 const errorResponse = [400, 403, 404, 405, 414, 416, 500, 501, 502, 503, 504];
@@ -99,6 +100,7 @@ export class Cdn extends Construct {
         ttl: errorDuration,
       };
     }),
+    webAclId: this.props.wafArn,
     defaultBehavior: {
       origin: new HttpOrigin(`ads.mediatailor.${Aws.REGION}.amazonaws.com`, {
         originSslProtocols: [OriginSslPolicy.TLS_V1_2],

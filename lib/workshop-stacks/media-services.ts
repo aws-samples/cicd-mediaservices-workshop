@@ -12,7 +12,7 @@ import { EMT_AD_DECISION_SERVER_URL } from "./config/emt-constants";
 import { SmdRegisterContent } from "./custom-resources/smd-register-content";
 
 export class MediaServicesStack extends Stack {
-  constructor(scope: Construct) {
+  constructor(scope: Construct, private wafArn: string) {
     super(scope, "media-stack", {
       env: {
         region: process.env.CDK_DEFAULT_REGION,
@@ -42,6 +42,7 @@ export class MediaServicesStack extends Stack {
     cdnAuthorization: this.mp.cdnOriginAuth.cdnSecret,
     empOriginUrl: this.mp.endpoints.hls.attrUrl,
     emtOriginUrl: this.adInsertion.emt.attrPlaybackEndpointPrefix,
+    wafArn: this.wafArn,
   }).distribution;
 
   // 4. Create Monitoring dashboard for your new channel
