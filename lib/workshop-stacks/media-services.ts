@@ -9,10 +9,11 @@ import { Construct } from "constructs";
 import { OpsMonitoring } from "../media-services/resources/channel-dashboard";
 import { AdInsertion } from "../media-services/resources/media-tailor";
 import { EMT_AD_DECISION_SERVER_URL } from "./config/emt-constants";
+import { RealtimeLogConfig } from "aws-cdk-lib/aws-cloudfront";
 import { SmdRegisterContent } from "./custom-resources/smd-register-content";
 
 export class MediaServicesStack extends Stack {
-  constructor(scope: Construct) {
+  constructor(scope: Construct, private realtimeLogConfig: RealtimeLogConfig) {
     super(scope, "media-stack", {
       env: {
         region: process.env.CDK_DEFAULT_REGION,
@@ -42,6 +43,7 @@ export class MediaServicesStack extends Stack {
     cdnAuthorization: this.mp.cdnOriginAuth.cdnSecret,
     empOriginUrl: this.mp.endpoints.hls.attrUrl,
     emtOriginUrl: this.adInsertion.emt.attrPlaybackEndpointPrefix,
+    realtimeLogConfig: this.realtimeLogConfig,
   }).distribution;
 
   // 4. Create Monitoring dashboard for your new channel

@@ -11,6 +11,7 @@ import {
   OriginRequestPolicy,
   OriginRequestQueryStringBehavior,
   OriginSslPolicy,
+  RealtimeLogConfig,
   ResponseHeadersPolicy,
   ViewerProtocolPolicy,
 } from "aws-cdk-lib/aws-cloudfront";
@@ -24,6 +25,7 @@ interface ICreateMediaCdn {
   emtOriginUrl: string;
   empOriginUrl: string;
   cdnAuthorization: Secret;
+  realtimeLogConfig: RealtimeLogConfig;
 }
 
 const errorResponse = [400, 403, 404, 405, 414, 416, 500, 501, 502, 503, 504];
@@ -108,6 +110,7 @@ export class Cdn extends Construct {
       allowedMethods: AllowedMethods.ALLOW_GET_HEAD,
       viewerProtocolPolicy: ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
       responseHeadersPolicy: this.myResponseHeadersPolicy,
+      realtimeLogConfig: this.props.realtimeLogConfig,
     },
     additionalBehaviors: {
       "/v1/session/*": {
@@ -116,6 +119,7 @@ export class Cdn extends Construct {
         allowedMethods: AllowedMethods.ALLOW_ALL,
         viewerProtocolPolicy: ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
         responseHeadersPolicy: ResponseHeadersPolicy.CORS_ALLOW_ALL_ORIGINS_WITH_PREFLIGHT,
+        realtimeLogConfig: this.props.realtimeLogConfig,
       },
       "*/v1/master/*": {
         origin: this.mediaTailorOrigin,
@@ -124,6 +128,7 @@ export class Cdn extends Construct {
         originRequestPolicy: this.myOriginRequestPolicyEMT,
         viewerProtocolPolicy: ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
         responseHeadersPolicy: this.myResponseHeadersPolicy,
+        realtimeLogConfig: this.props.realtimeLogConfig,
         functionAssociations: [
           {
             eventType: FunctionEventType.VIEWER_REQUEST,
@@ -138,6 +143,7 @@ export class Cdn extends Construct {
         allowedMethods: AllowedMethods.ALLOW_GET_HEAD,
         viewerProtocolPolicy: ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
         responseHeadersPolicy: this.myResponseHeadersPolicy,
+        realtimeLogConfig: this.props.realtimeLogConfig,
         functionAssociations: [
           {
             eventType: FunctionEventType.VIEWER_REQUEST,
@@ -152,6 +158,7 @@ export class Cdn extends Construct {
         originRequestPolicy: this.myOriginRequestPolicyEMT,
         viewerProtocolPolicy: ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
         responseHeadersPolicy: this.myResponseHeadersPolicy,
+        realtimeLogConfig: this.props.realtimeLogConfig,
         functionAssociations: [
           {
             eventType: FunctionEventType.VIEWER_REQUEST,
