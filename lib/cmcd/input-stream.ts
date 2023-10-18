@@ -18,7 +18,14 @@ export class KinesisDataStream extends Construct {
     });
     role.addToPrincipalPolicy(
       new PolicyStatement({
-        actions: ["kinesis:DescribeStreamSummary", "kinesis:DescribeStream", "kinesis:PutRecord", "kinesis:PutRecords"],
+        actions: [
+          "kinesis:DescribeStreamSummary",
+          "kinesis:DescribeStream",
+          "kinesis:PutRecord",
+          "kinesis:PutRecords",
+          "kinesis:StartStreamEncryption",
+          "kinesis:StopStreamEncryption",
+        ],
         resources: [this.stream.streamArn],
         effect: Effect.ALLOW,
       }),
@@ -27,7 +34,7 @@ export class KinesisDataStream extends Construct {
   }
 
   public stream = new Stream(this, "cf-log-flow", {
-    encryption: StreamEncryption.UNENCRYPTED,
+    encryption: StreamEncryption.MANAGED,
     streamMode: StreamMode.ON_DEMAND,
   });
 

@@ -1,6 +1,7 @@
 import { Role, ServicePrincipal, PolicyStatement, Effect, PolicyDocument } from "aws-cdk-lib/aws-iam";
 import { Stream } from "aws-cdk-lib/aws-kinesis";
 import { CfnDeliveryStream } from "aws-cdk-lib/aws-kinesisfirehose";
+import { LogGroup, LogStream } from "aws-cdk-lib/aws-logs";
 import { Bucket, BlockPublicAccess, BucketEncryption } from "aws-cdk-lib/aws-s3";
 import { Construct } from "constructs";
 
@@ -18,35 +19,28 @@ export class DeliveryToFireHose extends Construct {
     super(scope, "firehose-delivery");
   }
 
-  createCMCDBucketRole(bucket: Bucket) {
-    const role = new Role(this, "backup-role", {
-      assumedBy: new ServicePrincipal("firehose.amazonaws.com"),
-    });
-    role.addToPrincipalPolicy(
-      new PolicyStatement({
-        actions: ["s3:*"],
-        resources: [bucket.bucketArn, `${bucket.bucketArn}/*`],
-        effect: Effect.ALLOW,
-      }),
-    );
-
-    return role;
-  }
-
   private bucket = new Bucket(this, "cmcd-log-store", {
     blockPublicAccess: BlockPublicAccess.BLOCK_ALL,
     encryption: BucketEncryption.S3_MANAGED,
     publicReadAccess: false,
   });
 
-  public cmcdBucketRole = this.createCMCDBucketRole(this.bucket);
   public fireHoseRole = new Role(this, "role-arn", {
     assumedBy: new ServicePrincipal("firehose.amazonaws.com"),
     inlinePolicies: {
       base: new PolicyDocument({
         statements: [
           new PolicyStatement({
-            actions: ["kinesis:DescribeStreamSummary", "kinesis:DescribeStream", "kinesis:PutRecord", "kinesis:PutRecords"],
+            actions: [
+              "kinesis:DescribeStreamSummary",
+              "kinesis:DescribeStream",
+              "kinesis:PutRecord",
+              "kinesis:PutRecords",
+              "kinesis:GetRecord",
+              "kinesis:GetRecords",
+              "kinesis:GetShardIterator",
+              "kinesis:ListShards",
+            ],
             resources: [this.stream.streamArn],
             effect: Effect.ALLOW,
           }),
@@ -57,12 +51,20 @@ export class DeliveryToFireHose extends Construct {
           }),
           new PolicyStatement({
             effect: Effect.ALLOW,
-            actions: ["s3:*"],
-            resources: ["*"],
+            actions: ["s3:AbortMultipartUpload", "s3:GetBucketLocation", "s3:GetObject", "s3:ListBucket", "s3:ListBucketMultipartUploads", "s3:PutObject"],
+            resources: [this.bucket.bucketArn, `${this.bucket.bucketArn}/*`],
           }),
         ],
       }),
     },
+  });
+
+  public logGroup = new LogGroup(this, "error-logs", {
+    logGroupName: "cmcd-workshop-logs",
+  });
+  public logStream = new LogStream(this, "error-stream", {
+    logGroup: this.logGroup,
+    logStreamName: "logging",
   });
 
   public fhd = new CfnDeliveryStream(this, "delivery", {
@@ -74,15 +76,15 @@ export class DeliveryToFireHose extends Construct {
     s3DestinationConfiguration: {
       bucketArn: this.bucket.bucketArn,
       errorOutputPrefix: "errored",
-      roleArn: this.cmcdBucketRole.roleArn,
+      roleArn: this.fireHoseRole.roleArn,
       bufferingHints: {
         intervalInSeconds: 60,
       },
       prefix: "logs",
       cloudWatchLoggingOptions: {
         enabled: true,
-        logGroupName: "cmcd-workshop-logs",
-        logStreamName: "cmcd-workshop-logs",
+        logGroupName: this.logGroup.logGroupName,
+        logStreamName: this.logStream.logStreamName,
       },
     },
   });
