@@ -3,7 +3,7 @@
 <a name="summary"></a>
 ## Summary
 
-This workshop is designed and intended for anyone with an interest in learning how to deploy video workflows on AWS Elemental Media Services with a Continuous Integration/Continuous Deployment (CI/CD) approach.
+This workshop is designed and intended for anyone with an interest in learning how to deploy video workflows on AWS Elemental Media Services with a Continuous Integration/Continuous Delivery (CI/CD) approach.
 The code in this repository is intended to go along with the Workshop Studio. This workshop has 3 core tasks that should take the duration of the workshop (2 hours) - however if you have time, please look at the advanced topics section
 and select one that is most interesting and relevant for you (they all build on from task 3).
 
