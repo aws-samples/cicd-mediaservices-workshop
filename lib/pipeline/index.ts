@@ -14,7 +14,8 @@ import { BuildSpec } from "aws-cdk-lib/aws-codebuild";
  */
 export class PipelineStack extends Stack {
   constructor(app: App) {
-    super(app, "workshop-pipeline-stack (uksb-1tupboc33)", {
+    super(app, "workshop-pipeline-stack", {
+      description: 'workshop-pipeline-stack (uksb-1tupboc33)',
       env: {
         region: process.env.CDK_DEFAULT_REGION,
         account: process.env.CDK_DEFAULT_ACCOUNT,
