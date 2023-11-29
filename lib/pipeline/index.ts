@@ -18,7 +18,7 @@ import { PIPELINE_PROD_MANUAL_APPROVAL } from "../workshop-stacks/config/pipelin
 export class PipelineStack extends Stack {
   constructor(app: App, private mediaStage: MediaServicesStage) {
     super(app, "workshop-pipeline-stack", {
-      description: 'workshop-pipeline-stack (uksb-1tupboc33)',
+      description: 'Workshop pipeline stack (uksb-1tupboc33)',
       env: {
         region: process.env.CDK_DEFAULT_REGION,
         account: process.env.CDK_DEFAULT_ACCOUNT,
