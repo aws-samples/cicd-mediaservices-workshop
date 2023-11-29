@@ -7,6 +7,8 @@ This workshop is designed and intended for anyone with an interest in learning h
 The code in this repository is intended to go along with the Workshop Studio. This workshop has 3 core tasks that should take the duration of the workshop (2 hours) - however if you have time, please look at the advanced topics section
 and select one that is most interesting and relevant for you (they all build on from task 3).
 
+A [step-by-step workshop](https://catalog.us-east-1.prod.workshops.aws/workshops/b520360a-46d4-470e-a34f-c6cf4a73f674) is also available for this content.
+
 <a name="modules"></a>
 ## Cloning the repo
 
