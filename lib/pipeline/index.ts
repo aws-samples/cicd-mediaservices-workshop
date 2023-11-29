@@ -18,7 +18,8 @@ import { HarvestApiStage } from "../harvest-services";
  */
 export class PipelineStack extends Stack {
   constructor(app: App, private mediaStage: MediaServicesStage, private live2VodStage: HarvestApiStage) {
-    super(app, "workshop-pipeline-stack (uksb-1tupboc33)", {
+    super(app, "workshop-pipeline-stack", {
+      description: 'Workshop pipeline stack (uksb-1tupboc33)',
       env: {
         region: process.env.CDK_DEFAULT_REGION,
         account: process.env.CDK_DEFAULT_ACCOUNT,
