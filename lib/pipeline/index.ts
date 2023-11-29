@@ -17,7 +17,7 @@ import { MediaServicesStage } from "../media-services";
  */
 export class PipelineStack extends Stack {
   constructor(app: App, private mediaStage: MediaServicesStage) {
-    super(app, "workshop-pipeline-stack", {
+    super(app, "workshop-pipeline-stack (uksb-1tupboc33)", {
       env: {
         region: process.env.CDK_DEFAULT_REGION,
         account: process.env.CDK_DEFAULT_ACCOUNT,
